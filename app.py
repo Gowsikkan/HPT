@@ -46,98 +46,18 @@ def download_zip(url):
         else:
             
             print("No <a> tag found in list item.")
-            4
-            import pandas as pd
+import pandas as pd
 
-# Your JSON data
-json_data = {
-    "reporting_entity_name": "UBH TPA CLAIMS",
-    "reporting_entity_type": "Third-Party Administrator",
-    "plan_name": "BH-EAP-BLUE-BELL-TRUST-PPO",
-    "plan_id_type": "EIN",
-    "plan_id": "00000013",
-    "plan_market_type": "group",
-    "out_of_network": [{
-        "name": "SUBSEQUENT HOSPITAL CARE",
-        "billing_code_type": "CPT",
-        "billing_code_type_version": "2023",
-        "billing_code": "99232",
-        "description": "SUBSEQUENT HOSPITAL CARE",
-        "allowed_amounts": [{
-            "tin": {"type": "ein", "value": "030417452"},
-            "service_code": ["51"],
-            "billing_class": "professional",
-            "payments": [{"allowed_amount": 140.00,
-                           "providers": [{"billed_charge": 140.00,
-                                          "npi": [1528532728]}]}]
-        }]
-    }, {
-        "name": "SUBSEQUENT HOSPITAL CARE",
-        "billing_code_type": "CPT",
-        "billing_code_type_version": "2023",
-        "billing_code": "99233",
-        "description": "SUBSEQUENT HOSPITAL CARE",
-        "allowed_amounts": [{
-            "tin": {"type": "ein", "value": "030417452"},
-            "service_code": ["51"],
-            "billing_class": "professional", 
-            "payments": [{"allowed_amount": 202.00,
-                           "providers": [{"billed_charge": 202.00,
-                                          "npi": [1528532728, 1356462972]}]}]
-        }]
-    },
-                       {
-        "name": "SUBSEQUENT HOSPITAL CARE",
-        "billing_code_type": "CPT",
-        "billing_code_type_version": "2023",
-        "billing_code": "99233",
-        "description": "SUBSEQUENT HOSPITAL CARE",
-        "allowed_amounts": [{
-            "tin": {"type": "ein", "value": "030417452"},
-            "service_code": ["51"],
-            "billing_class": "professional",
-            "payments": [{"allowed_amount": 202.00,
-                           "providers": [{"billed_charge": 202.00,
-                                          "npi": [15]}]}]
-        }]
-    }],
-    "last_updated_on": "2023-12-01",
-    "version": "1.0.0"
-}
+# Load existing Excel file
+existing_excel_file = 'path/to/your/existing_file.xlsx'
+existing_df = pd.read_excel(existing_excel_file)
 
-# Create a DataFrame for allowed amounts
-allowed_amounts_data = []
+# Create new DataFrame
+new_data = {'Column1': [value1, value2, ...], 'Column2': [value3, value4, ...], ...}
+new_df = pd.DataFrame(new_data)
 
-for item in json_data["out_of_network"]:
-    for amount in item["allowed_amounts"]:
-        for payment in amount["payments"]:
-            for provider in payment["providers"]:
-                allowed_amounts_data.append({
-                    "Name": item["name"],
-                    "Billing Code": item["billing_code"],
-                    "Description": item["description"],
-                    "TIN Type": amount["tin"]["type"],
-                    "TIN Value": amount["tin"]["value"],
-                    "Service Code": ",".join(amount["service_code"]),
-                    "Billing Class": amount["billing_class"],
-                    "Allowed Amount": payment["allowed_amount"],
-                    "Billed Charge": provider["billed_charge"],
-                    "NPI": ",".join(map(str, provider["npi"]))
-                })
+# Append DataFrames
+combined_df = existing_df.append(new_df, ignore_index=True)
 
-# Create a DataFrame
-df = pd.DataFrame(allowed_amounts_data)
-df
-# Save to Excel
-# df.to_excel("allowed_amounts_data.xlsx", index=False)
-
-
-if __name__=="__main__":
-    url = "https://transparency-in-coverage.optum.com/"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-            urls=download_zip(url)
-    else:
-        print(f"Error accessing page:")
-    
+# Write back to Excel
+combined_df.to_excel(existing_excel_file, index=False)
