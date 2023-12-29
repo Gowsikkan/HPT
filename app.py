@@ -48,16 +48,29 @@ def download_zip(url):
             print("No <a> tag found in list item.")
 import pandas as pd
 
-# Load existing Excel file
-existing_excel_file = 'path/to/your/existing_file.xlsx'
-existing_df = pd.read_excel(existing_excel_file)
+def append_to_excel(df, excel_file_path):
+    try:
+        # Read existing data from Excel
+        existing_df = pd.read_excel(excel_file_path)
 
-# Create new DataFrame
-new_data = {'Column1': [value1, value2, ...], 'Column2': [value3, value4, ...], ...}
-new_df = pd.DataFrame(new_data)
+        # Identify the common 'plan_name' values between df and existing_df
+        common_plan_names = df[df['plan_name'].isin(existing_df['plan_name'])]['plan_name']
 
-# Append DataFrames
-combined_df = existing_df.append(new_df, ignore_index=True)
+        # Change 'flag' to 0 for common 'plan_name' in existing_df
+        existing_df.loc[existing_df['plan_name'].isin(common_plan_names), 'flag'] = 0
 
-# Write back to Excel
-combined_df.to_excel(existing_excel_file, index=False)
+        # Append df to existing_df
+        result_df = pd.concat([existing_df, df], ignore_index=True)
+
+        # Save the result back to Excel
+        result_df.to_excel(excel_file_path, index=False)
+        print("Data appended to Excel with updated flags.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Example usage
+# Replace these with your actual DataFrame and Excel file path
+df_to_append = pd.DataFrame({'plan_name': ['a', 'b'], 'flag': [1, 1]})
+excel_file_path = 'your_excel_file.xlsx'
+
+append_to_excel(df_to_append, excel_file_path)
