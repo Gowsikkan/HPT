@@ -48,29 +48,41 @@ def download_zip(url):
             print("No <a> tag found in list item.")
 import pandas as pd
 
-def append_to_excel(df, excel_file_path):
-    try:
-        # Read existing data from Excel
-        existing_df = pd.read_excel(excel_file_path)
+# Assuming df1 and df2 are your DataFrames
+# Replace this with your actual DataFrames
 
-        # Identify the common 'plan_name' values between df and existing_df
-        common_plan_names = df[df['plan_name'].isin(existing_df['plan_name'])]['plan_name']
+# Sample data for demonstration
+data1 = {'name': ['Alice', 'Bob', 'Charlie'],
+         'age': [25, 30, 35],
+         'plan_name': ['Basic', 'Standard', 'Premium'],
+         'flag': [0, 0, 0]}
 
-        # Change 'flag' to 0 for common 'plan_name' in existing_df
-        existing_df.loc[existing_df['plan_name'].isin(common_plan_names), 'flag'] = 0
+data2 = {'name': ['Bob', 'Charlie', 'David'],
+         'age': [30, 35, 28],
+         'plan_name': ['Standard', 'Premium', 'Basic'],
+         'flag': [0, 0, 0]}
 
-        # Append df to existing_df
-        result_df = pd.concat([existing_df, df], ignore_index=True)
+df1 = pd.DataFrame(data1)
+df2 = pd.DataFrame(data2)
 
-        # Save the result back to Excel
-        result_df.to_excel(excel_file_path, index=False)
-        print("Data appended to Excel with updated flags.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+# Iterate through rows in df2
+for index, row in df2.iterrows():
+    plan_name = row['plan_name']
+    
+    # Check if plan_name exists in df1
+    if plan_name in df1['plan_name'].values:
+        # Check if all other columns are equal
+        matching_rows = df1[df1['plan_name'] == plan_name]
+        matching_rows = matching_rows[(matching_rows[['name', 'age']] == row[['name', 'age']]).all(axis=1)]
 
-# Example usage
-# Replace these with your actual DataFrame and Excel file path
-df_to_append = pd.DataFrame({'plan_name': ['a', 'b'], 'flag': [1, 1]})
-excel_file_path = 'your_excel_file.xlsx'
+        if not matching_rows.empty:
+            # Update flag to 1 for the matched rows in df1
+            df1.loc[matching_rows.index, 'flag'] = 1
+        else:
+            # If no matching rows found, append the row from df2 to df1
+            df1 = df1.append(row, ignore_index=True)
+            # Update flag to 1 for the newly appended row
+            df1.loc[df1.index[-1], 'flag'] = 1
 
-append_to_excel(df_to_append, excel_file_path)
+# Display the updated df1
+print(df1)
