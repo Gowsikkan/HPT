@@ -86,3 +86,71 @@ for index, row in df2.iterrows():
 
 # Display the updated df1
 print(df1)
+
+
+import os
+import pandas as pd
+import PyPDF2
+from PIL import Image
+
+def extract_class(pdf_name, df):
+    """
+    Extracts the class for all pages of a particular PDF.
+    
+    Args:
+    - pdf_name (str): Name of the PDF file.
+    - df (DataFrame): DataFrame containing PDF names, classes, and page numbers.
+    
+    Returns:
+    - dict: Dictionary containing page numbers as keys and corresponding classes as values.
+    """
+    pdf_classes = {}
+    pdf_df = df[df['pdf_name'] == pdf_name]
+    for index, row in pdf_df.iterrows():
+        pdf_classes[row['pg_no']] = row['class']
+    return pdf_classes
+
+def take_screenshot(pdf_path, output_folder, pdf_classes):
+    """
+    Takes screenshots of pages in the PDF and saves them in the specified folder structure.
+    
+    Args:
+    - pdf_path (str): Path to the PDF file.
+    - output_folder (str): Path to the output folder.
+    - pdf_classes (dict): Dictionary containing page numbers and their corresponding classes.
+    """
+    with open(pdf_path, 'rb') as file:
+        pdf_reader = PyPDF2.PdfFileReader(file)
+        for page_num in range(pdf_reader.numPages):
+            page = pdf_reader.getPage(page_num)
+            image = Image.frombytes('RGB', page.mediaBox.dimensions, page.extractText())
+            class_folder = os.path.join(output_folder, pdf_classes.get(page_num + 1, 'Unknown'))
+            os.makedirs(class_folder, exist_ok=True)
+            image_path = os.path.join(class_folder, f'page_{page_num + 1}.png')
+            image.save(image_path)
+
+def main(pdf_name, df, folder_location):
+    """
+    Main function to extract class information, take screenshots, and store them.
+    
+    Args:
+    - pdf_name (str): Name of the PDF file.
+    - df (DataFrame): DataFrame containing PDF names, classes, and page numbers.
+    - folder_location (str): Location of the folder containing PDF files.
+    """
+    pdf_path = os.path.join(folder_location, pdf_name)
+    pdf_classes = extract_class(pdf_name, df)
+    take_screenshot(pdf_path, folder_location, pdf_classes)
+
+# Example usage:
+if __name__ == "__main__":
+    # Assuming df is a DataFrame containing columns: 'pdf_name', 'class', 'pg_no'
+    df = pd.DataFrame({
+        'pdf_name': ['example.pdf', 'example.pdf', 'example.pdf'],
+        'class': ['ClassA', 'ClassA', 'ClassB'],
+        'pg_no': [1, 2, 3]
+    })
+    pdf_name = 'example.pdf'
+    folder_location = '/path/to/folder'
+    main(pdf_name, df, folder_location)
+
