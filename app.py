@@ -154,3 +154,39 @@ if __name__ == "__main__":
     folder_location = '/path/to/folder'
     main(pdf_name, df, folder_location)
 
+import pandas as pd
+
+def calculate_class_percentages(df, class_column, count_column):
+    # Initialize dictionaries to store counts and percentages
+    counts = {'single': 0, 'double': 0, 'triple': 0}
+
+    # Calculate counts of single, double, and triple classes
+    total_count = 0
+    for _, row in df.iterrows():
+        class_count = len(row[class_column])
+        total_count += row[count_column]
+        if class_count == 1:
+            counts['single'] += row[count_column]
+        elif class_count == 2:
+            counts['double'] += row[count_column]
+        elif class_count == 3:
+            counts['triple'] += row[count_column]
+
+    # Calculate percentages
+    percentages = {key: (value / total_count) * 100 for key, value in counts.items()}
+
+    return percentages
+
+# Create DataFrame
+data = {'class': [['cs'], ['cs', 'pq'], ['cs', 'pq', 'at'], ['cs', 'pq', 'dd']],
+        'count': [100, 23, 10, 7]}
+df = pd.DataFrame(data)
+
+# Call the function
+result = calculate_class_percentages(df, 'class', 'count')
+
+# Print percentages
+for key, value in result.items():
+    print("Percentage of {} classes: {:.2f}%".format(key, value))
+
+
