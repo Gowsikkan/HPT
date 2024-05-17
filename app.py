@@ -190,3 +190,20 @@ for key, value in result.items():
     print("Percentage of {} classes: {:.2f}%".format(key, value))
 
 
+CM Analysis : 
+         Initially CM graded samples were selected from the golden data
+         Got the count of  SME provided keyword for both CM and DD on all the samples .
+         Get the keywords of the sentence from keybert and created a similarity matrix score for each sample.
+
+Selectction strategy:
+              Select samples if one or more CM keyword is present or
+               select samples if 2 or more DD kyowrd is present or 
+               select sample if similarity score is grater than 0.68 (from violin plot)
+
+PQ Analysis : 
+         Initially PQ graded samples were selected from the golden data
+         Got the count of  SME provided keyword for all the graded samples .
+         Got the count of SME provides keyword in entire golden data
+         
+Selection strategy:
+              Samples are selected if more than 2 PQ keyword is present
