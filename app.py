@@ -212,40 +212,63 @@ Selection strategy:
 import pandas as pd
 
 # Create the initial DataFrame
+import pandas as pd
+
+# Sample data
 data = {
-    'Filename': ['pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1'],
-    'page': [[1, 2, 3], [6, 7, 10, 11], [12, 13, 14], [15, 16, 19, 20, 21, 22], [26, 27, 28, 29, 30], [8, 9, 17, 18, 23, 24, 25]],
-    'class': ['A', 'B', 'C', 'D', 'E', 'X']
+    'Filename': ['pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf2', 'pdf2','pdf3','pdf3'],
+    'page': [
+        [1, 2, 3],
+        [6, 8, 10, 11],
+        [12, 13, 14],
+        [15, 17, 19, 21, 22],
+        [26, 27, 28, 29, 30],
+        [7, 16, 18, 23, 24, 25],
+        [1, 2, 3, 4, 6, 7, 9],
+        [5],
+        [1,2,3,5,7],
+        [4,6,8]
+    ],
+    'class': ['A', 'B', 'C', 'D', 'E', 'X', 'A', 'X','C','X']
 }
 
+# Create the dataframe
 df = pd.DataFrame(data)
 
-# Function to check if page can be added to a class
-def find_new_class(page, df):
-    for index, row in df.iterrows():
-        if row['class'] != 'X':
-            pages = row['page']
-            if any(p in pages for p in range(page-2, page+3)):
-                return row['class']
-    return 'X'
+# Function to process the dataframe
+def process_dataframe(df):
+    for filename in df['Filename'].unique():
+        # Filter by the current filename
+        sub_df = df[df['Filename'] == filename]
+        pages_dict = {row['class']: row['page'] for _, row in sub_df.iterrows()}
+        
+        if 'X' in pages_dict:
+            x_pages = pages_dict['X']
+            new_x_pages = []
+            for page in x_pages:
+                prev_class = next_class = None
+                for cls, pages in pages_dict.items():
+                    if cls != 'X':
+                        if page - 1 in pages:
+                            prev_class = cls
+                        if page + 1 in pages:
+                            next_class = cls
+                # If both previous and next pages belong to the same class, reassign the page
+                if prev_class and prev_class == next_class:
+                    pages_dict[prev_class].append(page)
+                else:
+                    new_x_pages.append(page)
+            # Update the pages for class X
+            pages_dict['X'] = new_x_pages
+            # Update the dataframe
+            for cls, pages in pages_dict.items():
+                df.loc[(df['Filename'] == filename) & (df['class'] == cls), 'page'] = [pages]
+    
+    # Remove empty class X rows
+    # df = df[~((df['class'] == 'X') & (df['page'].apply(len) == 0))]
+    return df
 
-# Find new class for each page in class 'X'
-new_pages = {}
-for page in df[df['class'] == 'X']['page'].values[0]:
-    new_class = find_new_class(page, df)
-    if new_class != 'X':
-        if new_class not in new_pages:
-            new_pages[new_class] = []
-        new_pages[new_class].append(page)
-
-# Update the DataFrame with new pages
-for new_class, pages in new_pages.items():
-    df.loc[df['class'] == new_class, 'page'].values[0].extend(pages)
-df.loc[df['class'] == 'X', 'page'] = df.loc[df['class'] == 'X', 'page'].apply(lambda x: [p for p in x if p not in sum(new_pages.values(), [])])
-
-# Remove empty class 'X'
-df = df[df['page'].apply(len) > 0]
-
-# Print the updated DataFrame
-print(df)
+# Process the dataframe
+updated_df = process_dataframe(df)
+print(updated_df)
 
