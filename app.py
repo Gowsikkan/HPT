@@ -207,3 +207,45 @@ PQ Analysis :
          
 Selection strategy:
               Samples are selected if more than 2 PQ keyword is present
+
+
+import pandas as pd
+
+# Create the initial DataFrame
+data = {
+    'Filename': ['pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1', 'pdf1'],
+    'page': [[1, 2, 3], [6, 7, 10, 11], [12, 13, 14], [15, 16, 19, 20, 21, 22], [26, 27, 28, 29, 30], [8, 9, 17, 18, 23, 24, 25]],
+    'class': ['A', 'B', 'C', 'D', 'E', 'X']
+}
+
+df = pd.DataFrame(data)
+
+# Function to check if page can be added to a class
+def find_new_class(page, df):
+    for index, row in df.iterrows():
+        if row['class'] != 'X':
+            pages = row['page']
+            if any(p in pages for p in range(page-2, page+3)):
+                return row['class']
+    return 'X'
+
+# Find new class for each page in class 'X'
+new_pages = {}
+for page in df[df['class'] == 'X']['page'].values[0]:
+    new_class = find_new_class(page, df)
+    if new_class != 'X':
+        if new_class not in new_pages:
+            new_pages[new_class] = []
+        new_pages[new_class].append(page)
+
+# Update the DataFrame with new pages
+for new_class, pages in new_pages.items():
+    df.loc[df['class'] == new_class, 'page'].values[0].extend(pages)
+df.loc[df['class'] == 'X', 'page'] = df.loc[df['class'] == 'X', 'page'].apply(lambda x: [p for p in x if p not in sum(new_pages.values(), [])])
+
+# Remove empty class 'X'
+df = df[df['page'].apply(len) > 0]
+
+# Print the updated DataFrame
+print(df)
+
