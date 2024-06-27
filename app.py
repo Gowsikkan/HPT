@@ -272,3 +272,41 @@ def process_dataframe(df):
 updated_df = process_dataframe(df)
 print(updated_df)
 
+import pandas as pd
+import json
+import os
+
+def json_to_dataframe(json_data):
+    data = []
+    for filename, details in json_data.items():
+        for class_name, class_details in details['Result'].items():
+            pages = class_details['classification_pages']
+            data.append([filename, class_name, pages])
+    
+    df = pd.DataFrame(data, columns=['file_name', 'class', 'page'])
+    return df
+
+def load_and_merge_json_files(directory_path):
+    merged_data = {}
+    
+    for file_name in os.listdir(directory_path):
+        if file_name.endswith('.json'):
+            file_path = os.path.join(directory_path, file_name)
+            with open(file_path, 'r') as f:
+                json_data = json.load(f)
+                merged_data.update(json_data)
+    
+    return merged_data
+
+# Directory containing JSON files (replace with your directory path)
+directory_path = 'path/to/your/json/files'
+
+# Load and merge JSON data from files in the directory
+merged_json_data = load_and_merge_json_files(directory_path)
+
+# Convert merged JSON to DataFrame
+df = json_to_dataframe(merged_json_data)
+
+print(df)
+
+
