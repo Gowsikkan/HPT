@@ -309,4 +309,56 @@ df = json_to_dataframe(merged_json_data)
 
 print(df)
 
+import pandas as pd
+import json
+import os
+
+class JSONProcessor:
+    def __init__(self, directory_path, all_classes):
+        self.directory_path = directory_path
+        self.all_classes = all_classes
+
+    def json_to_dataframe(self, json_data):
+        data = []
+        cls = []
+
+        for class_name, class_details in json_data['Result'].items():
+            cls.append(class_name)
+            pages = class_details['classification_pages']
+            data.append([json_data['Filename'], class_name, pages])
+
+        for class_name in self.all_classes:
+            if class_name not in cls:
+                data.append([json_data['Filename'], class_name, []])
+
+        df = pd.DataFrame(data, columns=['file_name', 'class', 'page'])
+        return df
+
+    def load_and_process_json_files(self):
+        res = pd.DataFrame()
+
+        for file_name in os.listdir(self.directory_path):
+            if file_name.endswith(".json"):
+                file_path = os.path.join(self.directory_path, file_name)
+                with open(file_path, 'r') as f:
+                    json_data = json.load(f)
+                    df = self.json_to_dataframe(json_data)
+                    res = pd.concat([res, df]).reset_index(drop=True)
+
+        return res
+
+# Directory containing JSON files (replace with your directory path)
+directory_path = 'outputs/1719517846/'
+
+# List of all possible classes (update this list based on your classes)
+all_classes = ['A', 'B', 'C']  # Add more classes if needed
+
+# Create an instance of JSONProcessor
+processor = JSONProcessor(directory_path, all_classes)
+
+# Load, process JSON data from files in the directory, and convert to DataFrame
+result_df = processor.load_and_process_json_files()
+
+print(result_df)
+
 
