@@ -361,4 +361,61 @@ result_df = processor.load_and_process_json_files()
 
 print(result_df)
 
+import pandas as pd
+
+# Sample data
+data = {
+    'filename': ['file1', 'file1', 'file2', 'file2'],
+    'page': [1, 2, 1, 2],
+    'text': ["some text with keyword", "some other text", "keyword present here", "another keyword"],
+    'pred_class': [['ao', 'hp'], ['ed', 'cp'], ['ao'], ['ar']],
+    'ar_proba': [0.04, 0.6, 0.8, 0.3]
+}
+
+df = pd.DataFrame(data)
+
+# Keyword to search for
+keyword = "keyword"
+
+# Process each file
+for filename, file_df in df.groupby('filename'):
+    # Initialize a counter for added 'ar' classes
+    ar_added_count = 0
+
+    # Check pages with 'ao', 'ed', 'hp' classes
+    for class_to_check in ['ao', 'ed', 'hp']:
+        for idx, row in file_df.iterrows():
+            if class_to_check in row['pred_class'] and keyword in row['text']:
+                df.at[idx, 'pred_class'].append('ar')
+                ar_added_count += 1
+                if ar_added_count == 3:
+                    break
+        if ar_added_count == 3:
+            break
+
+    # If no 'ar' class added, check individually predicted 'ar' pages
+    if ar_added_count < 3:
+        for idx, row in file_df.iterrows():
+            if row['pred_class'] == ['ar'] and keyword in row['text']:
+                if 'ar' not in df.at[idx, 'pred_class']:
+                    df.at[idx, 'pred_class'].append('ar')
+                    ar_added_count += 1
+                if ar_added_count == 3:
+                    break
+
+    # Remove 'ar' class from all other pages not updated
+    for idx, row in file_df.iterrows():
+        if 'ar' in row['pred_class'] and ar_added_count < 3:
+            row['pred_class'].remove('ar')
+
+# Ensure that each file has a maximum of 3 pages with 'ar' class
+for filename, file_df in df.groupby('filename'):
+    ar_pages = file_df[file_df['pred_class'].apply(lambda x: 'ar' in x)]
+    if len(ar_pages) > 3:
+        excess_ar_pages = ar_pages.iloc[3:]
+        for idx in excess_ar_pages.index:
+            df.at[idx, 'pred_class'].remove('ar')
+
+print(df)
+
 
