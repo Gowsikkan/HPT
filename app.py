@@ -418,4 +418,31 @@ for filename, file_df in df.groupby('filename'):
 
 print(df)
 
+def group_pages_and_cnfx(pages, cnfx):
+    grouped_pages = []
+    grouped_cnfx = []
+    temp_pages = [pages[0]]
+    temp_cnfx = [cnfx[0]]
+    
+    for i in range(1, len(pages)):
+        if pages[i] == pages[i-1] + 1:
+            temp_pages.append(pages[i])
+            temp_cnfx.append(cnfx[i])
+        else:
+            grouped_pages.append(temp_pages)
+            grouped_cnfx.append(temp_cnfx)
+            temp_pages = [pages[i]]
+            temp_cnfx = [cnfx[i]]
+    
+    # Append the last group
+    grouped_pages.append(temp_pages)
+    grouped_cnfx.append(temp_cnfx)
+    
+    return grouped_pages, grouped_cnfx
+
+# Apply the function to the DataFrame
+df[['page', 'cnfx']] = df.apply(lambda row: group_pages_and_cnfx(row['page'], row['cnfx']), axis=1, result_type='expand')
+
+print(df)
+
 
