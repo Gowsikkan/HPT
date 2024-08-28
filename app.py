@@ -446,3 +446,54 @@ df[['page', 'cnfx']] = df.apply(lambda row: group_pages_and_cnfx(row['page'], ro
 print(df)
 
 
+
+import pandas as pd
+
+# Sample DataFrame
+data = {
+    'file': [1, 1, 1, 1, 1, 2, 2, 2],
+    'page': [1, 2, 3, 4, 5, 6, 7, 8],
+    'class': [['ds', 'cm'], ['ds', 'cm'], ['ds', 'cm'], ['cm'], ['ds', 'cm'], ['ds', 'cm'], ['cm'], ['ds', 'cm']]
+}
+
+df = pd.DataFrame(data)
+
+def retain_max_continuous_ds(df):
+    segments = []
+    current_segment = []
+
+    # Identify all continuous 'ds' segments
+    for _, row in df.iterrows():
+        if 'ds' in row['class']:
+            current_segment.append(row['page'])
+        else:
+            if current_segment:
+                segments.append(current_segment)
+            current_segment = []
+
+    # Final check in case the last segment is the longest
+    if current_segment:
+        segments.append(current_segment)
+
+    # Determine the maximum segment length
+    max_length = max(len(segment) for segment in segments) if segments else 0
+
+    # Retain 'ds' only in segments with the maximum length
+    max_segments = [segment for segment in segments if len(segment) == max_length]
+
+    # Update the DataFrame to remove 'ds' from pages not in the max segments
+    if max_segments:
+        pages_with_max_ds = [page for segment in max_segments for page in segment]
+        df['class'] = df.apply(lambda row: [cls for cls in row['class'] if cls != 'ds'] 
+                               if row['page'] not in pages_with_max_ds else row['class'], axis=1)
+    
+    return df
+
+# Apply the function to each file group
+df = df.groupby('file').apply(retain_max_continuous_ds).reset_index(drop=True)
+
+print(df)
+
+
+
+
