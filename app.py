@@ -495,5 +495,31 @@ df = df.groupby('file').apply(retain_max_continuous_ds).reset_index(drop=True)
 print(df)
 
 
+def combine_pages(input_list):
+    if not input_list:
+        return []
+    
+    output_list = []
+    offset = 0
+    previous_value = None
+    
+    for current_value in input_list:
+        if previous_value is not None and current_value <= previous_value:
+            # Adjust offset whenever the sequence starts repeating
+            offset += previous_value
+        
+        output_list.append(current_value + offset)
+        previous_value = current_value
+    
+    return output_list
+
+# Test cases
+input1 = [1, 2, 3, 4, 1, 2, 3]
+output1 = combine_pages(input1)
+print(output1)  # Expected: [1, 2, 3, 4, 5, 6, 7]
+
+input2 = [1, 2, 3, 4, 5, 6, 8, 2, 3, 4, 2, 3]
+output2 = combine_pages(input2)
+print(output2)  # Expected: [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15]
 
 
