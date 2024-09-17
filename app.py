@@ -522,4 +522,42 @@ input2 = [1, 2, 3, 4, 5, 6, 8, 2, 3, 4, 2, 3]
 output2 = combine_pages(input2)
 print(output2)  # Expected: [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15]
 
+def longest_consecutive_sequences(nums, threshold):
+    if not nums:
+        return []
+    
+    # Create a set of numbers for fast lookups
+    num_set = set(nums)
+    result = []
+    longest_sequence = []
+    
+    # Loop through each number
+    for num in num_set:
+        # If num-1 is not in the set, then num is the start of a sequence
+        if num - 1 not in num_set:
+            current_num = num
+            current_streak = 1
+            current_sequence = [current_num]
+            
+            # Continue to find consecutive numbers
+            while current_num + 1 in num_set:
+                current_num += 1
+                current_streak += 1
+                current_sequence.append(current_num)
+            
+            # Check if the current sequence length is greater than the threshold
+            if threshold == -1:
+                # If we're looking for the longest sequence, keep track of it
+                if len(current_sequence) > len(longest_sequence):
+                    longest_sequence = current_sequence
+            elif current_streak > threshold:
+                result.extend(current_sequence)
+    
+    # Return the longest sequence if threshold is -1, otherwise return the filtered result
+    return longest_sequence if threshold == -1 else result
+
+# Example usage
+arr = [100, 4, 200, 1, 3, 2, 5, 6, 7, 8]
+threshold = -1
+print(longest_consecutive_sequences(arr, threshold))
 
