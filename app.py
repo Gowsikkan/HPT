@@ -118,5 +118,113 @@ if __name__ == "__main__":
     }
     df = pd.DataFrame(data)
 
-    # Updating table1 with new values from DataFrame
-    update_table_execute_batch(df, "table1", ["column1", "column2"], "id")
+    # Updating table1 with new values from DataFr
+
+
+import psycopg2
+import pandas as pd
+from psycopg2 import pool
+from psycopg2.extras import execute_batch
+
+# Singleton Connection Pool
+class PostgresPool:
+    _instance = None  # Singleton instance
+
+    def __new__(cls, minconn=1, maxconn=5, dsn=""):
+        if cls._instance is None:
+            cls._instance = super(PostgresPool, cls).__new__(cls)
+            cls._instance.pool = pool.SimpleConnectionPool(
+                minconn, maxconn, dsn=dsn
+            )
+        return cls._instance
+
+    def get_connection(self):
+        return self.pool.getconn()
+
+    def release_connection(self, conn):
+        self.pool.putconn(conn)
+
+    def close_all_connections(self):
+        self.pool.closeall()
+
+# Function to create and return a database connection
+def create_connection():
+    DATABASE_URL = "dbname=mydb user=myuser password=mypass host=localhost port=5432"
+    db_pool = PostgresPool(dsn=DATABASE_URL)  # Get the singleton pool
+    return db_pool.get_connection(), db_pool
+
+# Function to fetch data from two tables and merge into a DataFrame
+def fetch_and_prepare_df():
+    conn, db_pool = create_connection()  # Get a connection
+    cursor = conn.cursor()
+
+    try:
+        # Fetch data from table1
+        cursor.execute("SELECT id, column1 FROM table1;")
+        table1_data = cursor.fetchall()
+
+        # Fetch data from table2
+        cursor.execute("SELECT id, column2 FROM table2;")
+        table2_data = cursor.fetchall()
+
+        # Convert to DataFrames
+        df1 = pd.DataFrame(table1_data, columns=["id", "column1"])
+        df2 = pd.DataFrame(table2_data, columns=["id", "column2"])
+
+        # Merge DataFrames on 'id'
+        merged_df = pd.merge(df1, df2, on="id", how="inner")
+
+        return merged_df
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame on error
+
+    finally:
+        cursor.close()
+        db_pool.release_connection(conn)  # Return connection to pool
+
+# Function to update a table using execute_batch()
+def update_table_execute_batch(df, table_name, update_columns, condition_column):
+    conn, db_pool = create_connection()  # Get a connection
+    cursor = conn.cursor()
+
+    try:
+        if df.empty:
+            print("No data to update.")
+            return
+
+        # Build dynamic SQL update query
+        set_clause = ", ".join([f"{col} = %s" for col in update_columns])
+        sql_query = f"UPDATE {table_name} SET {set_clause} WHERE {condition_column} = %s"
+
+        # Convert DataFrame to list of tuples for execute_batch
+        data_tuples = [
+            tuple(row[col] for col in update_columns) + (row[condition_column],)
+            for _, row in df.iterrows()
+        ]
+
+        # Execute batch update in chunks
+        execute_batch(cursor, sql_query, data_tuples, page_size=1000)
+
+        conn.commit()  # Commit transaction after batch update
+        print(f"Updated {len(df)} rows in {table_name}.")
+
+    except Exception as e:
+        conn.rollback()  # Rollback on failure
+        print(f"Error updating {table_name}: {e}")
+
+    finally:
+        cursor.close()
+        db_pool.release_connection(conn)  # Return connection to pool
+
+# Main function to fetch data and update table3
+if __name__ == "__main__":
+    df = fetch_and_prepare_df()  # Fetch and prepare DataFrame
+
+    if not df.empty:
+        update_table_execute_batch(df, "table3", ["column1", "column2"], "id")
+    else:
+        print("No updates were performed.")
+
+
