@@ -46,3 +46,77 @@ def download_zip(url):
         else:
             
             print("No <a> tag found in list item.")
+
+
+
+
+import psycopg2
+import pandas as pd
+from psycopg2 import pool
+from psycopg2.extras import execute_batch
+
+class PostgresPool:
+    _instance = None  # Singleton instance
+
+    def __new__(cls, minconn=1, maxconn=5, dsn=""):
+        if cls._instance is None:
+            cls._instance = super(PostgresPool, cls).__new__(cls)
+            cls._instance.pool = pool.SimpleConnectionPool(
+                minconn, maxconn, dsn=dsn
+            )
+        return cls._instance
+
+    def get_connection(self):
+        return self.pool.getconn()
+
+    def release_connection(self, conn):
+        self.pool.putconn(conn)
+
+    def close_all_connections(self):
+        self.pool.closeall()
+
+# Function to update table using execute_batch()
+def update_table_execute_batch(df, table_name, update_columns, condition_column):
+    DATABASE_URL = "dbname=mydb user=myuser password=mypass host=localhost port=5432"
+    db_pool = PostgresPool(dsn=DATABASE_URL)  # Get the singleton pool
+
+    conn = db_pool.get_connection()  # Get a connection from the pool
+    cursor = conn.cursor()
+
+    try:
+        # Build dynamic SQL update query
+        set_clause = ", ".join([f"{col} = %s" for col in update_columns])
+        sql_query = f"UPDATE {table_name} SET {set_clause} WHERE {condition_column} = %s"
+
+        # Convert DataFrame to list of tuples for execute_batch
+        data_tuples = [
+            tuple(row[col] for col in update_columns) + (row[condition_column],)
+            for _, row in df.iterrows()
+        ]
+
+        # Execute batch update in chunks
+        execute_batch(cursor, sql_query, data_tuples, page_size=1000)
+
+        conn.commit()  # Commit transaction after batch update
+        print(f"Updated {len(df)} rows in {table_name}.")
+
+    except Exception as e:
+        conn.rollback()  # Rollback transaction in case of error
+        print(f"Error updating {table_name}: {e}")
+
+    finally:
+        cursor.close()
+        db_pool.release_connection(conn)  # Return connection to pool
+
+# Example usage
+if __name__ == "__main__":
+    # Creating a sample DataFrame with 50,000 rows
+    data = {
+        "id": range(1, 50001),
+        "column1": ["new_value"] * 50000,
+        "column2": ["updated_value"] * 50000
+    }
+    df = pd.DataFrame(data)
+
+    # Updating table1 with new values from DataFrame
+    update_table_execute_batch(df, "table1", ["column1", "column2"], "id")
