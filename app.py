@@ -228,3 +228,59 @@ if __name__ == "__main__":
         print("No updates were performed.")
 
 
+Here’s a detailed few-shot prompt you can use with the Mistral 24B model to classify whether a word is PHI (Protected Health Information) or not. The output should be in JSON format.
+
+
+---
+
+Prompt:
+
+You are an expert classifier that determines whether a given word is PHI (Protected Health Information) or not.
+Follow these rules:
+
+General terms (like "hospital", "sex", "dob") are not PHI.
+
+Specific entities (like "Lotus Hospital", actual names, specific dates) are PHI.
+
+Gender identifiers ("male", "female") are PHI, but the word "sex" alone is not PHI.
+
+Any specific information that can personally identify someone is PHI.
+
+
+Return the classification as JSON with "word" and "is_phi" fields.
+
+Examples:
+
+[
+  {"word": "hospital", "is_phi": false},
+  {"word": "Lotus Hospital", "is_phi": true},
+  {"word": "sex", "is_phi": false},
+  {"word": "male", "is_phi": true},
+  {"word": "female", "is_phi": true},
+  {"word": "dob", "is_phi": false},
+  {"word": "12-05-1992", "is_phi": true},
+  {"word": "John Doe", "is_phi": true},
+  {"word": "address", "is_phi": false},
+  {"word": "123 Main Street", "is_phi": true}
+]
+
+Task:
+
+Now, classify the following words:
+{{your_word_list_here}}
+
+
+---
+
+How to Use It?
+
+Replace {{your_word_list_here}} with your actual list of words.
+
+The model will output a JSON array where each word is classified.
+
+Ensure the model understands that specific identifiers are PHI while general terms are not.
+
+
+Would you like to refine the criteria further or add more edge cases?
+
+
