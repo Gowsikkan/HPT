@@ -284,3 +284,166 @@ Ensure the model understands that specific identifiers are PHI while general ter
 Would you like to refine the criteria further or add more edge cases?
 
 
+Here’s a clean and professional reformatting of your postprocessing logic for each document type:
+
+
+---
+
+Emergency Department (ED)
+
+Steps:
+
+1. Discontinuity Fix
+
+Fill small page gaps to make the sequence continuous.
+
+Example: Predicted pages: 1,2,3,6,7,8,15,18
+After fix: 1,2,3,4,5,6,7,8,15,18
+
+
+
+2. Exclusion Keywords
+
+Remove pages containing predefined exclusion keywords.
+
+In this example, no exclusion keywords found.
+
+
+
+3. Single Page Removal
+
+Discard standalone pages not part of a range.
+
+Pages removed: 15, 18
+
+
+
+
+
+---
+
+History & Physical (H&P)
+
+Steps:
+
+1. Inclusion Keywords
+
+Include pages that contain predefined inclusion keywords.
+
+Example: Pages 16 and 17 contain keywords → added as H&P pages.
+
+
+
+2. Discontinuity Fix
+
+Fill small gaps to connect sequences.
+
+Example: Predicted pages: 1,2,3,6,7,8,15,18
+After fix: 1,2,3,4,5,6,7,8,15,18
+
+
+
+3. Single Page Removal
+
+Remove isolated pages.
+
+Pages removed: 15, 18
+
+
+
+
+
+---
+
+Discharge Summary (DS)
+
+Steps:
+
+1. Discontinuity Fix
+
+Merge close page ranges.
+
+Example: 1,2,3,6,7,8,15,18 → 1,2,3,4,5,6,7,8,15,18
+
+
+
+2. Exclusion Keywords
+
+Remove pages with exclusion terms.
+
+
+
+3. Single Range Removal
+
+Keep only the longest continuous range.
+
+Example: Initial: 1–8, 45–47, 65 → Final: 1–8
+
+
+
+
+
+---
+
+Nutritional Assessment
+
+Steps:
+
+1. Discontinuity Fix
+
+Merge page sequences with ≤3 page gaps.
+
+Example: 1,5,6,7 → 1,2,3,4,5,6,7
+
+
+
+2. Outlier Removal
+
+Remove pages far beyond the 75th percentile (+100 pages).
+
+Example: 1–7, 145, 345 → 1–7
+
+
+
+
+
+---
+
+Anesthesia Type (AT) and Anesthesia Outcome (AO)
+
+Step:
+
+Probability-Based Limiting
+
+Select top 4 pages with highest model probability.
+
+Example: Initial: 1,4,12,23,56,78,235 → Final: 4,23,56,235
+
+
+
+
+---
+
+Anesthesia Report (AR) and Discharge Diagnosis (DD)
+
+Step:
+
+Class-Based Limiting
+
+Select representative pages from related classes:
+
+AR: One page each from AO, ED, H&P
+
+DD: One page each from DS and CM (total 4 pages)
+
+
+
+
+
+---
+
+Let me know if you’d like this in table format, PDF, or a visual flowchart.
+
+
+
+
